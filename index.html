@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
+<title>AIGC 视频产品流量看板</title>
+<style>
+:root{--bg:#F5F9FF;--ink:#0B2E67;--muted:rgba(11,46,103,.62);--faint:rgba(11,46,103,.34);--grid:rgba(11,46,103,.16);--mid:rgba(11,46,103,.74);--dark:#2164B4;--soft:#CFE3F7;--card:#FFFFFF;--good:#2164B4;--bad:#6C9CD0;--radius:24px}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,"Segoe UI",Arial,sans-serif;-webkit-font-smoothing:antialiased;padding:32px 34px 46px}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.shell{max-width:1500px;margin:0 auto}
+.topbar{display:flex;justify-content:space-between;gap:28px;align-items:flex-end;margin:0 4px 22px}
+.eyebrow{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--muted);margin-bottom:8px}
+h1{font-size:31px;line-height:1.08;letter-spacing:-.045em;margin:0;font-weight:800}
+.lead{font-size:13px;color:var(--muted);margin:10px 0 0;line-height:1.6;max-width:760px}
+.status{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:11px;white-space:nowrap;padding-bottom:4px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#2164B4;display:inline-block}
+.card{background:var(--card);border-radius:var(--radius);padding:23px 25px 18px;margin-bottom:18px}
+.controls{display:grid;grid-template-columns:1.1fr 1fr 1fr 1fr;gap:15px 18px;align-items:end}
+.control{min-width:0}
+.control label{display:block;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.1em;margin:0 0 7px;text-transform:uppercase}
+.control select,.control input[type=date],.control input[type=text]{width:100%;height:38px;background:var(--bg);border:1px solid var(--grid);border-radius:12px;padding:0 12px;color:var(--ink);outline:none}
+.control select:focus,.control input:focus{border-color:var(--ink)}
+.multi-select{position:relative}.multi-toggle{width:100%;height:38px;border:1px solid var(--grid);border-radius:12px;background:var(--bg);color:var(--ink);padding:0 34px 0 12px;text-align:left;position:relative;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.multi-toggle:after{content:'⌄';position:absolute;right:12px;color:var(--muted)}.multi-toggle[aria-expanded="true"]{border-color:var(--dark);box-shadow:0 0 0 3px rgba(33,100,180,.12)}
+.multi-menu{display:none;position:absolute;left:0;right:0;top:44px;z-index:30;background:var(--card);border:1px solid var(--grid);border-radius:16px;padding:12px;box-shadow:0 12px 24px rgba(11,46,103,.12)}.multi-select.open .multi-menu{display:block}.multi-menu-head{display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:9px}.multi-menu-head button,.multi-menu-actions button{border:0;background:transparent;color:var(--muted);font-size:10px;font-weight:800;text-decoration:underline;text-underline-offset:3px;padding:0}.multi-menu-search input{height:32px;font-size:11px}.multi-menu-actions{display:flex;gap:12px;margin:9px 0 7px}.multi-group-title{font-size:9px;font-weight:800;letter-spacing:.06em;color:var(--muted);padding:8px 2px 5px;border-top:1px solid var(--grid);margin-top:6px}.multi-group-title:first-child{border-top:0;margin-top:0}.multi-options{display:grid;grid-template-columns:1fr 1fr;gap:5px 8px;max-height:220px;overflow:auto}.multi-option{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--mid);padding:4px 2px;border-radius:7px}.multi-option:hover{background:var(--bg);color:var(--ink)}.multi-option input{accent-color:var(--dark);margin:0}
+.range-actions{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:1px}
+.pill{height:30px;border:1px solid var(--grid);background:var(--bg);color:var(--muted);border-radius:999px;padding:0 12px;font-size:11px;font-weight:700}
+.pill.active,.pill:hover{background:#2164B4;color:#FFFFFF;border-color:#2164B4}
+.control-note{font-size:10px;color:var(--muted);margin-left:auto}
+.site-area{grid-column:1/-1;border-top:1px solid var(--grid);padding-top:14px}
+.site-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.site-toolbar .small{font-size:10px;font-weight:800;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;margin-right:2px}
+.site-btn{height:28px;border:0;background:transparent;color:var(--muted);font-size:11px;font-weight:700;padding:0 2px;text-decoration:underline;text-underline-offset:3px}
+.site-grid{display:flex;gap:7px;flex-wrap:wrap}
+.site-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--grid);background:var(--bg);border-radius:999px;padding:7px 10px;color:var(--mid);font-size:11px;cursor:pointer;user-select:none}
+.site-chip input{accent-color:var(--ink);margin:0}
+.site-chip.checked{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.site-chip.hidden{display:none}
+.selected-note{font-size:10px;color:var(--muted);margin-top:9px}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+.kpi{background:var(--card);border-radius:20px;padding:17px 18px 15px;min-height:115px}
+.kpi-label{font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.kpi-value{font-size:27px;font-weight:800;letter-spacing:-.04em;margin:12px 0 6px;white-space:nowrap}
+.kpi-foot{font-size:10px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.kpi-delta{font-weight:800;color:var(--ink)}
+.kpi-delta.missing{color:var(--muted)}
+.grid{display:grid;grid-template-columns:1.45fr 1fr;gap:18px}
+.wide{grid-column:1/-1}
+.card-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:10px}
+h2{font-size:17px;line-height:1.2;letter-spacing:-.025em;margin:0;font-weight:800}
+.sub{font-size:11px;line-height:1.55;color:var(--muted);margin-top:5px}
+.mini-control{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.mini-control label{font-size:10px;color:var(--muted);font-weight:700}
+.mini-control select{height:30px;border:1px solid var(--grid);background:var(--bg);border-radius:10px;padding:0 9px;color:var(--ink);font-size:11px}
+.chartbox{position:relative;width:100%;min-height:340px}
+svg.chart{width:100%;height:100%;min-height:340px;display:block;overflow:visible}
+svg.chart text{font-family:Inter,"Segoe UI",Arial,sans-serif}
+.empty{height:280px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:3px;margin-bottom:4px}
+.legend-item{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)}
+.legend-dot{width:7px;height:7px;border-radius:50%;background:var(--ink);display:inline-block}
+.src{font-size:9px;color:var(--faint);margin-top:9px;letter-spacing:.08em;font-weight:600}
+.notice{border-top:1px solid var(--grid);margin-top:14px;padding-top:11px;font-size:10px;color:var(--muted);line-height:1.6}
+.table-wrap{overflow:auto;margin-top:5px}
+table{width:100%;border-collapse:collapse;min-width:760px;font-size:11px}
+th{text-align:left;color:var(--muted);font-size:10px;letter-spacing:.07em;text-transform:uppercase;font-weight:800;padding:10px 9px;border-bottom:1px solid var(--ink);cursor:pointer;white-space:nowrap}
+td{padding:10px 9px;border-bottom:1px solid var(--grid);white-space:nowrap}
+td.num,th.num{text-align:right}
+tbody tr:hover{background:var(--bg)}
+.site-name{font-weight:800}
+.group-name{color:var(--muted);font-size:10px}
+.delta-up,.delta-down{font-weight:800}
+.delta-up{color:var(--ink)}
+.delta-down{color:var(--mid)}
+.na{color:var(--muted)}
+.footer{font-size:10px;color:var(--muted);line-height:1.7;margin:4px 5px 0}
+.footer strong{color:var(--ink)}
+.tooltip{position:fixed;z-index:10;display:none;pointer-events:none;background:var(--ink);color:var(--bg);padding:9px 11px;border-radius:10px;font-size:11px;line-height:1.55;max-width:270px;box-shadow:none}
+.tooltip strong{font-weight:800}
+.reveal{animation:fade .65s ease both}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.reveal{animation:none}}
+@media (max-width:1100px){.controls{grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr}.wide{grid-column:auto}.topbar{align-items:flex-start;flex-direction:column;gap:8px}}
+@media (max-width:680px){body{padding:20px 14px 30px}h1{font-size:26px}.controls{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}.kpi-value{font-size:22px}.control-note{margin-left:0;width:100%}.card{padding:18px 16px 15px;border-radius:18px}.chartbox{min-height:280px}svg.chart{min-height:280px}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">AIGC VIDEO / TRAFFIC INTELLIGENCE</div>
+      <h1>AIGC 视频产品流量看板</h1>
+      <p class="lead">产品的访问规模、参与度与排名变化。默认查看最近 28 天，可按产品、指标、时间粒度和比较口径切换。</p>
+    </div>
+    <div class="status"><span class="status-dot"></span><span id="dataStatus">数据加载中…</span><span>WORLDWIDE · SUBDOMAINS INCLUDED · DEVICE TOTAL</span></div>
+  </header>
+
+  <section class="card controls" aria-label="看板筛选器">
+    <div class="control"><label>产品选择（可多选）</label><div class="multi-select" id="productPicker"><button type="button" class="multi-toggle" id="productToggle" aria-haspopup="listbox" aria-expanded="false">全部产品</button><div class="multi-menu" id="productMenu"><div class="multi-menu-head"><strong>选择产品（可多选）</strong><button type="button" id="closeProductMenu">完成</button></div><div class="multi-menu-search"><input id="productSearch" type="text" placeholder="搜索域名" aria-label="搜索产品" /></div><div class="multi-menu-actions"><button type="button" id="selectAllProducts">全选</button><button type="button" id="clearAllProducts">清空</button></div><div id="productOptions" role="group" aria-label="产品列表"></div></div></div></div>
+    <div class="control"><label for="metricSelect">主指标</label><select id="metricSelect"></select></div>
+    <div class="control"><label for="granularitySelect">时间粒度</label><select id="granularitySelect"><option value="day">日</option><option value="week" selected>周</option><option value="month">月</option></select></div>
+    <div class="control"><label for="scaleSelect">趋势对比方式</label><select id="scaleSelect"><option value="actual" selected>绝对值</option><option value="log">对数轴</option><option value="index">指数化（首期=100）</option></select></div>
+    <div class="control"><label for="startDate">开始日期</label><input id="startDate" type="date" /></div>
+    <div class="control"><label for="endDate">结束日期</label><input id="endDate" type="date" /></div>
+    <div class="control"><label for="compareToggle">周期对比</label><select id="compareToggle"><option value="on" selected>显示上一周期</option><option value="off">关闭上一周期</option></select></div>
+    <div class="range-actions">
+      <button class="pill" data-quick="7">最近 7 天</button>
+      <button class="pill active" data-quick="28">最近 28 天</button>
+      <button class="pill" data-quick="all">全周期</button>
+      <span class="control-note" id="rangeNote"></span>
+    </div>
+  </section>
+
+  <section class="kpis" id="kpis"></section>
+
+  <main class="grid">
+    <section class="card wide reveal" data-chart-template="G21 Rank Strip · glance-gallery.html · Flows climbs to the top">
+      <div class="card-head"><div><h2 id="trendTitle">访问量变化保持可比</h2><div class="sub" id="trendSub">每条线代表一个产品 · 周聚合 · 绝对值</div></div><div class="mini-control"><label for="trendMetric">趋势指标</label><select id="trendMetric"></select></div></div>
+      <div class="legend" id="trendLegend"></div><div class="chartbox"><svg class="chart" id="trendChart" viewBox="0 0 1100 380" role="img" aria-label="产品趋势图"></svg></div>
+      <div class="src">G21 RANK STRIP / GLANCE GALLERY / TIME-SERIES COMPARISON</div>
+    </section>
+
+    <section class="card wide reveal" data-chart-template="G3 Chunky Bars · glance-gallery.html · Revenue by plan">
+      <div class="card-head"><div><h2 id="rankTitle">当前区间谁的规模最大</h2><div class="sub" id="rankSub">按当前指标聚合排序 · 柱长与数值成正比</div></div></div>
+      <div class="chartbox"><svg class="chart" id="rankChart" viewBox="0 0 1100 430" role="img" aria-label="产品排名图"></svg></div>
+      <div class="src">G3 CHUNKY BARS / GLANCE GALLERY / PRODUCT RANKING</div>
+    </section>
+
+    <section class="card wide reveal" data-chart-template="F8 Plumb Scatter · basics-gallery.html · Price against satisfaction, twelve products">
+      <div class="card-head"><div><h2>规模与参与度是否同向</h2><div class="sub">每个点代表一个产品 · 垂线落到 x 轴 · 悬停查看明细</div></div><div class="mini-control"><label for="scatterX">X</label><select id="scatterX"></select><label for="scatterY">Y</label><select id="scatterY"></select></div></div>
+      <div class="chartbox"><svg class="chart" id="scatterChart" viewBox="0 0 1100 520" role="img" aria-label="产品散点图"></svg></div>
+      <div class="src">F8 PLUMB SCATTER / BASICS GALLERY / PRODUCT RELATIONSHIP</div>
+    </section>
+
+    <section class="card wide reveal" data-chart-template="G20 Matrix Heat · glance-gallery.html · Adoption runs hot on the new versions">
+      <div class="card-head"><div><h2>产品表现在哪些时间段变热</h2><div class="sub" id="heatSub">行 = 产品 · 列 = 时间桶 · 深浅 = 指标值</div></div></div>
+      <div class="chartbox"><svg class="chart" id="heatChart" viewBox="0 0 1100 450" role="img" aria-label="产品时间热力图"></svg></div>
+      <div class="src">G20 MATRIX HEAT / GLANCE GALLERY / PRODUCT × TIME</div>
+    </section>
+
+    <section class="card wide reveal" data-chart-template="G20 Matrix Heat · glance-gallery.html · every cell carries its number">
+      <div class="card-head"><div><h2>明细对比</h2><div class="sub">点击表头可排序 · 覆盖率只统计当前指标的有效日数 · n.a. 不等于 0</div></div></div>
+      <div class="table-wrap"><table id="detailTable"><thead></thead><tbody></tbody></table></div>
+      <div class="notice"><strong>口径提示：</strong>独立访客为逐日数据的合计，不代表整个区间去重后的独立用户；平均访问时长、页面数/访问、跳出率和桌面端份额按访问量加权计算。长期数据中的部分产品存在缺失日，缺失不会被填充为 0。</div>
+      <div class="src">SOURCE: ENGAGEMENTOVERVIEW EXPORTS · DATA.JSON · MERGED BY DATE + SITE</div>
+    </section>
+  </main>
+
+  <p class="footer">数据范围：<strong>2025-01-01—2026-10-16</strong> · 默认窗口：<strong>2026-09-19—2026-10-16</strong> · 该文件为离线单文件，可直接保存、转发或在浏览器中打开。</p>
+</div>
+<div class="tooltip" id="tooltip"></div>
+<script>
+let PAYLOAD = null;
+const INK='#0B2E67',PAPER='#FFFFFF',MUTED='rgba(11,46,103,.62)',FAINT='rgba(11,46,103,.34)',GRID='rgba(11,46,103,.16)';
+const LAD=['#0B2E67','#2164B4','#4F86C6','#89B4E0','#DDECFB'];
+const SITE_COLORS=['#1F77B4','#E07A00','#2E8B57','#D1495B','#7450A8','#8C564B','#C04B8C','#008C95','#A07800','#5C6B73','#2E7D9A','#B65E00','#3F8F3F','#B13A3A'];
+const MISSING='rgba(11,46,103,.10)';
+const NS='http://www.w3.org/2000/svg';
+const $=id=>document.getElementById(id);
+const svgEl=(p,t,a={})=>{const n=document.createElementNS(NS,t);Object.entries(a).forEach(([k,v])=>n.setAttribute(k,v));p.appendChild(n);return n};
+const svgText=(p,a,s)=>{const n=svgEl(p,'text',a);n.textContent=s;return n};
+const title=(n,s)=>{const t=document.createElementNS(NS,'title');t.textContent=s;n.appendChild(t)};
+const dateObj=s=>new Date(s+'T00:00:00Z');
+const fmtDate=s=>s.slice(5).replace('-','/');
+const fmtNumber=v=>{if(v==null||!Number.isFinite(v))return 'n.a.';if(Math.abs(v)>=1e8)return (v/1e8).toFixed(1)+'亿';if(Math.abs(v)>=1e4)return (v/1e4).toFixed(1)+'万';return Math.round(v).toLocaleString('zh-CN')};
+const fmtOne=v=>v==null||!Number.isFinite(v)?'n.a.':v.toFixed(1);
+const fmtPct=v=>v==null||!Number.isFinite(v)?'n.a.':(v*100).toFixed(1)+'%';
+const fmtDuration=v=>{if(v==null||!Number.isFinite(v))return 'n.a.';const m=Math.floor(v/60),s=Math.round(v%60);return m+':'+String(s).padStart(2,'0')};
+const fmtMetric=(key,v)=>key==='duration'?fmtDuration(v):key==='bounce'||key==='desktop'?fmtPct(v):key==='pages'?fmtOne(v):fmtNumber(v);
+const METRICS={
+  visits:{label:'访问量',kind:'sum'},
+  pageviews:{label:'页面浏览总量',kind:'sum'},
+  uv:{label:'独立访客日合计',kind:'sum'},
+  duration:{label:'平均访问时长',kind:'weightedDuration'},
+  pages:{label:'页面数/访问',kind:'ratio'},
+  bounce:{label:'跳出率',kind:'weightedRatio'},
+  desktop:{label:'桌面端份额',kind:'weightedRatio'}
+};
+const METRIC_INDEX={visits:2,desktop:3,uv:4,duration:5,pages:6,bounce:7,pageviews:8};
+let SITE_BY_ID,ROWS,state;
+
+function valid(v){return typeof v==='number'&&Number.isFinite(v)}
+function dateRange(start,end){const out=[];let d=dateObj(start),last=dateObj(end);while(d<=last){out.push(d.toISOString().slice(0,10));d.setUTCDate(d.getUTCDate()+1)}return out}
+function daysBetween(start,end){return Math.round((dateObj(end)-dateObj(start))/86400000)+1}
+function previousRange(){const n=daysBetween(state.start,state.end);const end=dateObj(state.start);end.setUTCDate(end.getUTCDate()-1);const start=new Date(end);start.setUTCDate(start.getUTCDate()-n+1);return {start:start.toISOString().slice(0,10),end:end.toISOString().slice(0,10)}}
+function bucketKey(date,gran){const d=dateObj(date);if(gran==='day')return date;if(gran==='month')return date.slice(0,7);const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()-day+1);return d.toISOString().slice(0,10)}
+function bucketLabel(key,gran){if(gran==='month')return key.replace('-','/');if(gran==='day')return fmtDate(key);const d=dateObj(key);return String(d.getUTCMonth()+1).padStart(2,'0')+'/'+String(d.getUTCDate()).padStart(2,'0')}
+function activeSelectedIds(){return [...state.selected]}
+function selectedRows(start=state.start,end=state.end){const active=new Set(activeSelectedIds());return ROWS.filter(r=>active.has(r.site)&&r.date>=start&&r.date<=end)}
+function metricValue(list,key){const m=METRICS[key], idx=METRIC_INDEX[key];const rows=list.filter(r=>valid(r[key]));if(!rows.length)return null;if(m.kind==='sum')return rows.reduce((a,r)=>a+r[key],0);const weighted=rows.filter(r=>valid(r.visits)&&r.visits>0);if(m.kind==='weightedDuration')return weighted.length?weighted.reduce((a,r)=>a+r.duration*r.visits,0)/weighted.reduce((a,r)=>a+r.visits,0):rows.reduce((a,r)=>a+r.duration,0)/rows.length;if(m.kind==='ratio'&&key==='pages'){const vs=list.filter(r=>valid(r.pageviews)&&valid(r.visits)&&r.visits>0);return vs.length?vs.reduce((a,r)=>a+r.pageviews,0)/vs.reduce((a,r)=>a+r.visits,0):null}return weighted.length?weighted.reduce((a,r)=>a+r[key]*r.visits,0)/weighted.reduce((a,r)=>a+r.visits,0):rows.reduce((a,r)=>a+r[key],0)/rows.length}
+function aggregateSite(siteId,start,end,key){const all=ROWS.filter(r=>r.site===siteId&&r.date>=start&&r.date<=end);const usable=all.filter(r=>valid(r[key]));return {value:metricValue(all,key),coverage:all.length?usable.length/all.length:0,days:all.length,valid:usable.length}}
+function aggregateSelected(start,end,key){const active=new Set(activeSelectedIds());return metricValue(ROWS.filter(r=>active.has(r.site)&&r.date>=start&&r.date<=end),key)}
+function delta(current,previous){return valid(current)&&valid(previous)&&previous!==0?(current-previous)/Math.abs(previous):null}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function showTip(html,x,y){const t=$('tooltip');t.innerHTML=html;t.style.display='block';t.style.left=Math.min(window.innerWidth-285,Math.max(10,x+12))+'px';t.style.top=Math.min(window.innerHeight-100,Math.max(10,y+12))+'px'}
+function hideTip(){$('tooltip').style.display='none'}
+function tipFor(node,html){node.addEventListener('mouseenter',e=>showTip(html,e.clientX,e.clientY));node.addEventListener('mousemove',e=>showTip(html,e.clientX,e.clientY));node.addEventListener('mouseleave',hideTip)}
+function shade(rank,total){if(!total)return LAD[2];return LAD[Math.min(LAD.length-1,Math.floor(rank/Math.max(1,total)*LAD.length))]}
+function siteColor(siteId){const index=PAYLOAD.sites.findIndex(site=>site.id===siteId);return SITE_COLORS[index<0?0:index%SITE_COLORS.length]}
+function lerp(a,b,t){return a+(b-a)*t}
+function scaleValue(v,all,mode){if(!valid(v))return null;const vals=all.filter(valid);if(!vals.length)return null;if(mode==='log')return Math.log10(Math.max(0,v)+1);if(mode==='index'){const base=vals[0];return base?100*v/base:null}return v}
+function niceMax(v){if(!valid(v)||v<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(v)));const n=v/p;return (n<=1?1:n<=2?2:n<=5?5:10)*p}
+function clearSvg(id){const s=$(id);s.innerHTML='';return s}
+function drawEmpty(id,text='暂无可用数据'){const s=clearSvg(id);svgText(s,{x:550,y:190,'font-size':13,fill:MUTED,'text-anchor':'middle'},text);return s}
+function aggregateBuckets(siteId,start,end,key,gran){const map=new Map();ROWS.filter(r=>r.site===siteId&&r.date>=start&&r.date<=end).forEach(r=>{const k=bucketKey(r.date,gran);if(!map.has(k))map.set(k,[]);map.get(k).push(r)});return new Map([...map.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,rows])=>[k,metricValue(rows,key)]))}
+function currentBuckets(start=state.start,end=state.end,gran=state.granularity){const all=new Set();activeSelectedIds().forEach(site=>aggregateBuckets(site,start,end,state.trendMetric,gran).forEach((_,k)=>all.add(k)));let keys=[...all].sort();const limit=gran==='day'?60:gran==='week'?36:24;return keys.length>limit?keys.slice(-limit):keys}
+
+function setupControls(){
+  Object.entries(METRICS).forEach(([k,v])=>{['metricSelect','trendMetric','scatterX','scatterY'].forEach(id=>{const o=document.createElement('option');o.value=k;o.textContent=v.label;$(id).appendChild(o)})});
+  $('metricSelect').value=state.metric;$('trendMetric').value=state.trendMetric;$('scatterX').value=state.scatterX;$('scatterY').value=state.scatterY;
+  $('startDate').min=PAYLOAD.meta.minDate;$('startDate').max=PAYLOAD.meta.maxDate;$('startDate').value=state.start;
+  $('endDate').min=PAYLOAD.meta.minDate;$('endDate').max=PAYLOAD.meta.maxDate;$('endDate').value=state.end;
+  $('metricSelect').addEventListener('change',e=>{state.metric=e.target.value;state.trendMetric=e.target.value;$('trendMetric').value=e.target.value;renderAll()});
+  $('trendMetric').addEventListener('change',e=>{state.trendMetric=e.target.value;renderAll()});
+  $('granularitySelect').addEventListener('change',e=>{state.granularity=e.target.value;renderAll()});
+  $('scaleSelect').addEventListener('change',e=>{state.scale=e.target.value;renderAll()});
+  $('scatterX').addEventListener('change',e=>{state.scatterX=e.target.value;renderScatter()});$('scatterY').addEventListener('change',e=>{state.scatterY=e.target.value;renderScatter()});
+  $('compareToggle').addEventListener('change',e=>{state.compare=e.target.value==='on';renderAll()});
+  $('startDate').addEventListener('change',e=>{state.start=e.target.value>state.end?state.end:e.target.value;updateQuick();renderAll()});$('endDate').addEventListener('change',e=>{state.end=e.target.value<state.start?state.start:e.target.value;updateQuick();renderAll()});
+  $('productToggle').addEventListener('click',()=>{const open=$('productPicker').classList.toggle('open');$('productToggle').setAttribute('aria-expanded',String(open));if(open)$('productSearch').focus()});$('closeProductMenu').addEventListener('click',()=>{ $('productPicker').classList.remove('open');$('productToggle').setAttribute('aria-expanded','false')});
+  $('productSearch').addEventListener('input',e=>{state.search=e.target.value.trim().toLowerCase();renderSitePicker()});
+  $('selectAllProducts').addEventListener('click',()=>{PAYLOAD.sites.forEach(s=>state.selected.add(s.id));renderSitePicker();renderAll()});$('clearAllProducts').addEventListener('click',()=>{state.selected.clear();renderSitePicker();renderAll()});
+  document.addEventListener('click',e=>{if(!$('productPicker').contains(e.target)){$('productPicker').classList.remove('open');$('productToggle').setAttribute('aria-expanded','false')}});
+  document.querySelectorAll('[data-quick]').forEach(b=>b.addEventListener('click',()=>setQuick(b.dataset.quick)));
+}
+function visibleSites(){return PAYLOAD.sites.filter(s=>!state.search||s.id.toLowerCase().includes(state.search))}
+function productLabel(){const n=activeSelectedIds().length;if(n===PAYLOAD.sites.length)return '全部产品';if(n===0)return '未选择产品';if(n<=2)return activeSelectedIds().map(id=>SITE_BY_ID.get(id).label).join('、');return `已选 ${n} 个产品`}
+function renderSitePicker(){const groups=Object.entries(PAYLOAD.meta.groups).map(([gid,g])=>{const sites=visibleSites().filter(s=>s.group===gid);if(!sites.length)return '';return `<div class="multi-group-title">${escapeHtml(g.label)}</div><div class="multi-options">${sites.map(s=>`<label class="multi-option"><input type="checkbox" data-site="${s.id}" ${state.selected.has(s.id)?'checked':''}/><span>${escapeHtml(s.label)}</span></label>`).join('')}</div>`}).join('');$('productOptions').innerHTML=groups||'<div class="selected-note">没有匹配的产品</div>';$('productOptions').querySelectorAll('input').forEach(i=>i.addEventListener('change',e=>{if(e.target.checked)state.selected.add(e.target.dataset.site);else state.selected.delete(e.target.dataset.site);renderSitePicker();renderAll()}));$('productToggle').textContent=productLabel()}
+function setQuick(which){const end=PAYLOAD.meta.maxDate;if(which==='all'){state.start=PAYLOAD.meta.minDate;state.end=end}else{const n=Number(which);const d=dateObj(end);d.setUTCDate(d.getUTCDate()-n+1);state.start=d.toISOString().slice(0,10);state.end=end} $('startDate').value=state.start;$('endDate').value=state.end;updateQuick();renderAll()}
+function updateQuick(){document.querySelectorAll('[data-quick]').forEach(b=>{let active=false;if(b.dataset.quick==='all')active=state.start===PAYLOAD.meta.minDate;else active=daysBetween(state.start,state.end)===Number(b.dataset.quick)&&state.end===PAYLOAD.meta.maxDate;b.classList.toggle('active',active)})}
+
+function renderAll(){renderKpis();renderTrend();renderRank();renderScatter();renderHeat();renderTable();$('rangeNote').textContent=`${state.start} → ${state.end} · ${daysBetween(state.start,state.end)} 天 · ${activeSelectedIds().length} 个产品`;}
+function renderKpis(){const prev=previousRange();const items=[['访问量','visits'],['页面浏览总量','pageviews'],['平均访问时长','duration'],['页面数/访问','pages'],['跳出率','bounce']];$('kpis').innerHTML=items.map(([label,key])=>{const v=aggregateSelected(state.start,state.end,key),p=state.compare?aggregateSelected(prev.start,prev.end,key):null,d=state.compare?delta(v,p):null;const deltaText=state.compare?(d==null?'无法比较':(d>=0?'+':'')+(d*100).toFixed(1)+'%'):'上一周期已关闭';return `<div class="kpi"><div class="kpi-label">${label}</div><div class="kpi-value">${fmtMetric(key,v)}</div><div class="kpi-foot"><span class="kpi-delta ${d==null?'missing':''}">${deltaText}</span><span>${state.compare?'vs 上一周期':'当前区间'}</span></div></div>`}).join('')}
+function renderTrend(){const s=clearSvg('trendChart');const sites=activeSelectedIds().map(id=>SITE_BY_ID.get(id)).filter(Boolean);if(!sites.length)return drawEmpty('trendChart','请至少选择一个产品');const keys=currentBuckets();if(!keys.length)return drawEmpty('trendChart');const W=1100,H=380,L=66,R=24,T=22,B=54,plotW=W-L-R,plotH=H-T-B;const series=sites.map(site=>{const vals=aggregateBuckets(site.id,state.start,state.end,state.trendMetric,state.granularity);return {site,vals:keys.map(k=>vals.get(k)??null)}});const all=series.flatMap(x=>x.vals).filter(valid);const transformed=series.flatMap(x=>x.vals.map(v=>scaleValue(v,x.vals.filter(valid),state.scale))).filter(valid);const max=state.scale==='index'?niceMax(Math.max(...transformed,100)):niceMax(Math.max(...transformed));const x=i=>L+(keys.length===1?plotW/2:i/(keys.length-1)*plotW);const y=v=>T+plotH-(v/max)*plotH;for(let i=0;i<=4;i++){const yy=T+plotH-i/4*plotH;svgEl(s,'line',{x1:L,y1:yy,x2:W-R,y2:yy,stroke:GRID,'stroke-width':.8});const raw=max*i/4;svgText(s,{x:L-10,y:yy+3,'font-size':10,fill:MUTED,'text-anchor':'end'},state.scale==='index'?Math.round(raw):fmtMetric(state.trendMetric,raw))}keys.forEach((k,i)=>{if(i===0||i===keys.length-1||i%Math.ceil(keys.length/6)===0)svgText(s,{x:x(i),y:H-24,'font-size':10,fill:MUTED,'text-anchor':'middle'},bucketLabel(k,state.granularity))});series.forEach(ser=>{const validVals=ser.vals.filter(valid),color=siteColor(ser.site.id),pts=[];ser.vals.forEach((v,i)=>{if(valid(v)){const z=state.scale==='index'?scaleValue(v,validVals,'index'):scaleValue(v,validVals,state.scale);pts.push([x(i),y(z),v,i])}});if(pts.length<1)return;const d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');const hit=svgEl(s,'path',{d,fill:'none',stroke:color,'stroke-width':10,opacity:0,'stroke-linecap':'round','stroke-linejoin':'round','pointer-events':'stroke'});tipFor(hit,`<strong>${escapeHtml(ser.site.label)}</strong><br>${METRICS[state.trendMetric].label}`);const path=svgEl(s,'path',{d,fill:'none',stroke:color,'stroke-width':2.2,opacity:'.95','stroke-linecap':'round','stroke-linejoin':'round'});title(path,`${ser.site.label} · ${METRICS[state.trendMetric].label}`);pts.forEach(p=>{const c=svgEl(s,'circle',{cx:p[0],cy:p[1],r:2.8,fill:color,opacity:.98});tipFor(c,`<strong>${escapeHtml(ser.site.label)}</strong><br>${bucketLabel(keys[p[3]],state.granularity)}<br>${METRICS[state.trendMetric].label}：${fmtMetric(state.trendMetric,p[2])}`)})});svgText(s,{x:L,y:14,'font-size':10,fill:MUTED},state.scale==='actual'?'绝对值':state.scale==='log'?'对数轴':'指数化（首期=100）');$('trendTitle').textContent=`${METRICS[state.trendMetric].label}的变化保持可比`;$('trendSub').textContent=`每条线代表一个产品 · ${state.granularity==='day'?'日':state.granularity==='week'?'周':'月'}聚合 · ${state.scale==='actual'?'绝对值':state.scale==='log'?'对数轴':'指数化'}`;$('trendLegend').innerHTML=series.map(x=>`<span class="legend-item"><i class="legend-dot" style="background:${siteColor(x.site.id)}"></i>${escapeHtml(x.site.label)}</span>`).join('')}
+function renderRank(){const s=clearSvg('rankChart');const list=activeSelectedIds().map(id=>{const site=SITE_BY_ID.get(id),a=aggregateSite(id,state.start,state.end,state.metric);return {site,...a}}).filter(x=>valid(x.value)).sort((a,b)=>b.value-a.value);if(!list.length)return drawEmpty('rankChart','当前指标没有可用数据');const W=1100,H=430,L=205,R=90,T=26,B=20,plotW=W-L-R,rowH=Math.min(27,(H-T-B)/list.length);const max=state.scale==='log'?Math.max(...list.map(x=>Math.log10(x.value+1))):Math.max(...list.map(x=>x.value));const domain=niceMax(max);list.forEach((it,i)=>{const y=T+i*rowH+rowH*.23,h=Math.max(10,rowH*.54),raw=state.scale==='log'?Math.log10(it.value+1):it.value;const w=Math.max(2,raw/domain*plotW);svgText(s,{x:L-11,y:y+h*.76,'font-size':10.5,fill:INK,'text-anchor':'end','font-weight':i<3?800:600},it.site.label);const bar=svgEl(s,'rect',{x:L,y,width:w,height:h,rx:8,fill:shade(i,list.length)});tipFor(bar,`<strong>${escapeHtml(it.site.label)}</strong><br>${METRICS[state.metric].label}：${fmtMetric(state.metric,it.value)}<br>覆盖率：${(it.coverage*100).toFixed(0)}%`);svgText(s,{x:L+w+8,y:y+h*.76,'font-size':10,'font-weight':800,fill:INK},fmtMetric(state.metric,it.value))});svgText(s,{x:L,y:H-2,'font-size':9,fill:MUTED},state.scale==='log'?'对数显示':`当前区间 · ${daysBetween(state.start,state.end)} 天`);$('rankTitle').textContent=`${METRICS[state.metric].label}当前区间排名`;$('rankSub').textContent=`按当前区间绝对值排序 · ${state.scale==='log'?'柱长使用对数轴以保留小体量产品的差异':'柱长与数值成正比'} · 缺失数据不填 0`}
+function renderScatter(){const s=clearSvg('scatterChart');const list=activeSelectedIds().map(id=>{const site=SITE_BY_ID.get(id),x=aggregateSite(id,state.start,state.end,state.scatterX),y=aggregateSite(id,state.start,state.end,state.scatterY);return {site,x:x.value,y:y.value}}).filter(a=>valid(a.x)&&valid(a.y));if(!list.length)return drawEmpty('scatterChart','当前选择没有足够的双指标数据');const W=1100,H=520,L=88,R=56,T=34,B=78,pW=W-L-R,pH=H-T-B;const xv=list.map(a=>a.x),yv=list.map(a=>a.y);const xMax=niceMax(Math.max(...xv)),yMax=niceMax(Math.max(...yv));const x=v=>L+v/xMax*pW,y=v=>T+pH-v/yMax*pH;for(let i=0;i<=4;i++){const yy=T+pH-i/4*pH,xx=L+i/4*pW;svgEl(s,'line',{x1:L,y1:yy,x2:W-R,y2:yy,stroke:GRID,'stroke-width':.8});svgEl(s,'line',{x1:xx,y1:T,x2:xx,y2:T+pH,stroke:GRID,'stroke-width':.8});svgText(s,{x:L-12,y:yy+4,'font-size':11,fill:MUTED,'text-anchor':'end'},fmtMetric(state.scatterY,yMax*i/4));svgText(s,{x:xx,y:H-40,'font-size':11,fill:MUTED,'text-anchor':'middle'},fmtMetric(state.scatterX,xMax*i/4))}list.sort((a,b)=>b.x-a.x).forEach(it=>{const cx=x(it.x),cy=y(it.y),color=siteColor(it.site.id);svgEl(s,'line',{x1:cx,y1:cy,x2:cx,y2:T+pH,stroke:GRID,'stroke-width':.9,'stroke-dasharray':'3 4'});const c=svgEl(s,'circle',{cx,cy,r:Math.max(5,Math.min(11,7+Math.log10(it.x+1)-2)),fill:color,stroke:PAPER,'stroke-width':2});tipFor(c,`<strong>${escapeHtml(it.site.label)}</strong><br>${METRICS[state.scatterX].label}：${fmtMetric(state.scatterX,it.x)}<br>${METRICS[state.scatterY].label}：${fmtMetric(state.scatterY,it.y)}`);svgText(s,{x:cx+11,y:cy-10,'font-size':11,fill:INK,'font-weight':700},it.site.label)});svgText(s,{x:L,y:18,'font-size':11,fill:MUTED},METRICS[state.scatterY].label);svgText(s,{x:W-R,y:H-12,'font-size':11,fill:MUTED,'text-anchor':'end'},METRICS[state.scatterX].label)}
+function renderHeat(){const s=clearSvg('heatChart');const keys=currentBuckets(state.start,state.end,state.granularity);const sites=activeSelectedIds().map(id=>SITE_BY_ID.get(id)).filter(Boolean).map(site=>({site,a:aggregateSite(site.id,state.start,state.end,state.metric)})).sort((a,b)=>(b.a.value??-Infinity)-(a.a.value??-Infinity));if(!keys.length||!sites.length)return drawEmpty('heatChart');const limit=state.granularity==='day'?14:state.granularity==='week'?10:12;const showKeys=keys.length>limit?keys.slice(-limit):keys;const W=1100,H=450,L=175,T=42,R=22,B=28,pW=W-L-R,pH=Math.max(260,Math.min(350,sites.length*24));const cw=pW/showKeys.length,rh=pH/sites.length;const cellVals=[];sites.forEach(it=>{const map=aggregateBuckets(it.site.id,state.start,state.end,state.metric,state.granularity);showKeys.forEach(k=>{const v=map.get(k);if(valid(v))cellVals.push(v)})});const mn=Math.min(...cellVals),mx=Math.max(...cellVals);const color=v=>{if(!valid(v))return MISSING;const t=mx===mn?.5:(v-mn)/(mx-mn);return LAD[Math.min(LAD.length-1,Math.max(0,Math.round((1-t)*(LAD.length-1))))]};showKeys.forEach((k,i)=>svgText(s,{x:L+i*cw+cw/2,y:25,'font-size':10,fill:MUTED,'text-anchor':'middle'},bucketLabel(k,state.granularity)));sites.forEach((it,ri)=>{const y=T+ri*rh;svgText(s,{x:L-11,y:y+rh*.65,'font-size':10,fill:INK,'font-weight':ri<3?800:600,'text-anchor':'end'},it.site.label);const map=aggregateBuckets(it.site.id,state.start,state.end,state.metric,state.granularity);showKeys.forEach((k,ci)=>{const v=map.get(k),x=L+ci*cw+2,yy=y+2,rect=svgEl(s,'rect',{x,y:yy,width:Math.max(2,cw-4),height:Math.max(12,rh-4),rx:7,fill:color(v)});tipFor(rect,`<strong>${escapeHtml(it.site.label)}</strong><br>${bucketLabel(k,state.granularity)}<br>${METRICS[state.metric].label}：${fmtMetric(state.metric,v)}`);if(cw>44)svgText(s,{x:x+(cw-4)/2,y:yy+(rh-4)/2+3,'font-size':9,'font-weight':800,'text-anchor':'middle',fill:valid(v)&&((mx===mn?.5:(v-mn)/(mx-mn))>.54)?PAPER:INK},fmtMetric(state.metric,v))})});svgText(s,{x:L,y:T+pH+22,'font-size':9,fill:MUTED},`浅 → 深：${fmtMetric(state.metric,mn)} → ${fmtMetric(state.metric,mx)}`);$('heatSub').textContent=`行 = 产品 · 列 = ${state.granularity==='day'?'日':state.granularity==='week'?'周':'月'} · 深浅 = ${METRICS[state.metric].label} · 显示最近 ${showKeys.length} 个时间桶`}
+function renderTable(){const prev=previousRange();let list=activeSelectedIds().map(id=>{const site=SITE_BY_ID.get(id),a=aggregateSite(id,state.start,state.end,state.metric),p=state.compare?aggregateSite(id,prev.start,prev.end,state.metric):{value:null};return {site,value:a.value,coverage:a.coverage,previous:p.value,change:delta(a.value,p.value)}});list.sort((a,b)=>{const av=state.sortKey==='site'?a.site.label:state.sortKey==='coverage'?a.coverage:state.sortKey==='change'?(a.change??-Infinity):(a.value??-Infinity);const bv=state.sortKey==='site'?b.site.label:state.sortKey==='coverage'?b.coverage:state.sortKey==='change'?(b.change??-Infinity):(b.value??-Infinity);return (av>bv?1:av<bv?-1:0)*state.sortDir});const headers=[['site','产品'],['group','竞品组'],['value',METRICS[state.metric].label],['previous','上一周期'],['change','变化'],['coverage','覆盖率']];$('detailTable').querySelector('thead').innerHTML='<tr>'+headers.map(([k,l])=>`<th class="${k==='value'||k==='previous'||k==='change'||k==='coverage'?'num':''}" data-sort="${k}">${l}</th>`).join('')+'</tr>';$('detailTable').querySelector('tbody').innerHTML=list.map(it=>`<tr><td><span class="site-name">${escapeHtml(it.site.label)}</span></td><td><span class="group-name">${escapeHtml(it.site.groupLabel.split(' · ')[0])}</span></td><td class="num ${it.value==null?'na':''}">${fmtMetric(state.metric,it.value)}</td><td class="num ${it.previous==null?'na':''}">${state.compare?fmtMetric(state.metric,it.previous):'—'}</td><td class="num ${it.change==null?'na':it.change>=0?'delta-up':'delta-down'}">${state.compare&&it.change!=null?(it.change>=0?'+':'')+(it.change*100).toFixed(1)+'%':'—'}</td><td class="num">${it.value==null?'n.a.':(it.coverage*100).toFixed(0)+'%'}</td></tr>`).join('');$('detailTable').querySelectorAll('th[data-sort]').forEach(th=>th.addEventListener('click',()=>{const k=th.dataset.sort;if(state.sortKey===k)state.sortDir*=-1;else{state.sortKey=k;state.sortDir=-1}renderTable()}))}
+
+async function loadDashboardData(){
+  try{
+    const response=await fetch('./data.json?v='+Date.now(),{cache:'no-store'});
+    if(!response.ok)throw new Error('data.json HTTP '+response.status);
+    PAYLOAD=await response.json();
+    SITE_BY_ID=new Map(PAYLOAD.sites.map(s=>[s.id,s]));
+    ROWS=PAYLOAD.data.map(r=>({date:r[0],site:r[1],group:r[2],visits:r[3],desktop:r[4],uv:r[5],duration:r[6],pages:r[7],bounce:r[8],pageviews:r[9]}));
+    state={start:PAYLOAD.meta.recentStart,end:PAYLOAD.meta.recentEnd,group:'ALL',metric:'visits',trendMetric:'visits',granularity:'week',scale:'actual',compare:true,search:'',selected:new Set(PAYLOAD.sites.map(s=>s.id)),scatterX:'visits',scatterY:'duration',sortKey:'value',sortDir:-1};
+    const lead=document.querySelector('.lead');
+    if(lead)lead.textContent=`${PAYLOAD.sites.length} 个产品的访问规模、参与度与排名变化。默认查看最近 28 天，可按产品、指标、时间粒度和比较口径切换。`;
+    const footer=document.querySelector('.footer');
+    if(footer)footer.innerHTML=`数据范围：<strong>${PAYLOAD.meta.minDate}—${PAYLOAD.meta.maxDate}</strong> · 默认窗口：<strong>${PAYLOAD.meta.recentStart}—${PAYLOAD.meta.recentEnd}</strong> · 已排除：即梦（jimeng.com）、可灵（klingai.com、kling.ai）。`;
+    const source=[...document.querySelectorAll('.src')].find(el=>el.textContent.includes('ENGAGEMENTOVERVIEW'));
+    if(source)source.textContent=`SOURCE: ENGAGEMENTOVERVIEW EXPORTS · DATA.JSON UPDATED ${PAYLOAD.meta.updated} · MERGED BY DATE + SITE`;
+    setupControls();renderSitePicker();updateQuick();renderAll();
+    $('dataStatus').textContent='数据更新于 '+PAYLOAD.meta.updated+' · 每 5 分钟检查';
+    window.setTimeout(()=>window.location.reload(),300000);
+  }catch(error){
+    $('dataStatus').textContent='数据加载失败';
+    document.querySelector('.shell').insertAdjacentHTML('afterbegin','<div class="card" style="color:#B13A3A">请通过 http:// 或 https:// 打开此页面，并确认 data.json 与 dashboard.html 在同一目录。<br>'+escapeHtml(error.message)+'</div>');
+  }
+}
+loadDashboardData();
+</script>
+</body>
+</html>
