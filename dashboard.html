@@ -256,8 +256,7 @@ async function loadDashboardData(){
     const source=[...document.querySelectorAll('.src')].find(el=>el.textContent.includes('ENGAGEMENTOVERVIEW'));
     if(source)source.textContent=`SOURCE: ENGAGEMENTOVERVIEW EXPORTS · DATA.JSON UPDATED ${PAYLOAD.meta.updated} · MERGED BY DATE + SITE`;
     setupControls();renderSitePicker();updateQuick();renderAll();
-    $('dataStatus').textContent='数据更新于 '+PAYLOAD.meta.updated+' · 每 5 分钟检查';
-    window.setTimeout(()=>window.location.reload(),300000);
+    $('dataStatus').textContent='数据更新于 '+PAYLOAD.meta.updated+' · 手动刷新';
   }catch(error){
     $('dataStatus').textContent='数据加载失败';
     document.querySelector('.shell').insertAdjacentHTML('afterbegin','<div class="card" style="color:#B13A3A">请通过 http:// 或 https:// 打开此页面，并确认 data.json 与 dashboard.html 在同一目录。<br>'+escapeHtml(error.message)+'</div>');
